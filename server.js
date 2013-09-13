@@ -1,23 +1,26 @@
+
+//Include Required LIBS
 var express = require('express')
 var io = require('socket.io');
 var path = require('path');
 
+//begin Config
+var ListenPort = 888;
+var TailedFile = '/var/log/messages';
+var IpRule = /^((192.168.0.\d{1,3}))$/;
+//end Config 
+
 var app = express();
-var server = app.listen(888);
+var server = app.listen(listenPort);
 var io = io.listen(server);
 
-//filename = __dirname + '/var/log/system.log';
-//filename = '/var/log/mpd.log';
-filename = '/var/log/radius.log';
+filename = TailedFile;
 
+//If Open http://server:ListenPort Put into Client Stream index.html file
 
 app.get('/', function(req, res) {
     res.sendfile(__dirname + '/index.html');
 });
-
-
-
-
 
 
 function nl2br (str, is_xhtml) {
@@ -28,26 +31,21 @@ function nl2br (str, is_xhtml) {
 
 io.sockets.on('connection', function (socket) {
     var endpoint = socket.manager.handshaken[socket.id].address;
-    //console.log('Client connected from: ' + endpoint.address + ":" + endpoint.port);
 
     var spawn = require('child_process').spawn;
     var tail = spawn('tail', ['-f', filename]);
 
     tail.stdout.on('data', function (data) {
         var IP = endpoint.address;
-        //IP = IP.split('.');
-        //io.sockets.emit('log', IP);
-
-        RegE = /^((192.168.0.\d{1,3}))$/
-        if(RegE.test(IP))
+/*block Acces By IP*/
+        RegE = IpRule;
+        if(RegE.test(IP)) //If ip not in IpRule Access Denied!
          socket.emit('log', nl2br(data.toString('utf8')));
         else {
          socket.emit('log', 'access denied!');
          socket.disconnect();
         }
     });
-
-    
 
     socket.on('disconnect', function (socket){
 	tail.kill();
