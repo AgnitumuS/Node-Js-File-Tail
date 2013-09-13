@@ -1,0 +1,6 @@
+NodeJS Server what implemented  monitoring system of file
+
+Require:
+
+express
+socket.io
